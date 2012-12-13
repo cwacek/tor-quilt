@@ -1,0 +1,87 @@
+#!/bin/bash
+
+usage() {
+  echo "Run a number of experiments."
+  echo "usage: multirun -s <save_base_directory> [-b <experiment search dir>] <exp_filename> [<exp_filename> ...]"
+  exit 1
+}
+
+asksure() {
+echo -n "Continue (Y/N)? "
+while read -r -n 1 -s answer; do
+  if [[ $answer = [YyNn] ]]; then
+    [[ $answer = [Yy] ]] && retval=0
+    [[ $answer = [Nn] ]] && retval=1
+    break
+  fi
+done
+echo ""
+return $retval
+}
+
+
+
+DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+declare -a requested_exps
+noopts=0
+basedir=""
+savedir=""
+
+
+
+while [ $# -ne 0 ]; do
+  
+  case $1 in
+  -s)
+    shift
+    savedir="${1%/}"
+    if [[ ! -d $savedir ]]; then
+      echo "Error: Save directory '$savedir' isn't a directory"
+      usage 
+    fi
+    ;;
+  -b)
+    [[ "$noopts" -eq "1" ]] &&  echo "Error: Options are not allowed after the first experiment name" && usage
+    shift
+    basedir="${1%/}"
+    if [[ ! -d $basedir ]]; then
+      echo "Error: Base directory '$basedir' isn't a directory"
+      usage 
+    fi
+    ;;
+
+  *)
+    noopts=1
+    if [[ ! -f "$basedir/$1" ]]; then
+      echo "Couldn't find requested experiment $basedir/$1'"
+    else
+      requested_exps=( "${requested_exps[@]}" "$basedir/$1" )
+    fi
+    ;;
+  esac
+
+  shift
+done
+
+[[ -z $savedir ]] && echo "Error: Save directory required." && usage
+
+[[ "${#requested_exps[@]}" -lt "1" ]] && echo "Error: no experiments provided" && usage
+
+echo "Ready to run the following experiments:"
+for experiment in ${requested_exps[@]}; do 
+  echo -e "\033[0;33m$experiment\033[0m"
+done
+
+asksure || exit 3
+
+/usr/bin/fab setup_clients setup_servers
+
+for experiment in ${requested_exps[@]}; do 
+  expsavename=${experiment##*/}
+  echo -e "Running \033[0;33m$experiment\033[0m. Logging to '${savedir}/$expsavename.log'"
+  bash $DIR/start_exp.sh $experiment ${savedir}/$expsavename 2>&1 | tee ${savedir}/$expsavename.log
+  if [[ "$?" != "0" ]]; then echo "Failed."; exit 1; fi
+done
+
+

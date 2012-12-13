@@ -1,0 +1,26 @@
+hosts: [router18.inbuild-small.SAFER, router4.inbuild-small.SAFER, router19.inbuild-small.SAFER,
+  router3.inbuild-small.SAFER, client4.inbuild-small.SAFER, router2.inbuild-small.SAFER,
+  client9.inbuild-small.SAFER, directory5.inbuild-small.SAFER, client5.inbuild-small.SAFER,
+  core1.inbuild-small.SAFER, client8.inbuild-small.SAFER, directory4.inbuild-small.SAFER,
+  router10.inbuild-small.SAFER, router16.inbuild-small.SAFER, server3.inbuild-small.SAFER,
+  client3.inbuild-small.SAFER, router6.inbuild-small.SAFER, router9.inbuild-small.SAFER,
+  core3.inbuild-small.SAFER, control.inbuild-small.SAFER, router20.inbuild-small.SAFER,
+  client7.inbuild-small.SAFER, server5.inbuild-small.SAFER, router1.inbuild-small.SAFER,
+  server4.inbuild-small.SAFER, directory2.inbuild-small.SAFER, client6.inbuild-small.SAFER,
+  router17.inbuild-small.SAFER, core2.inbuild-small.SAFER, router5.inbuild-small.SAFER,
+  directory1.inbuild-small.SAFER]
+roledefs:
+  client: [client3.inbuild-small.SAFER, client5.inbuild-small.SAFER, client8.inbuild-small.SAFER,
+    client9.inbuild-small.SAFER, client4.inbuild-small.SAFER, client6.inbuild-small.SAFER,
+    client7.inbuild-small.SAFER]
+  control: [control.inbuild-small.SAFER]
+  core: [core2.inbuild-small.SAFER, core3.inbuild-small.SAFER, core1.inbuild-small.SAFER]
+  directory: [directory5.inbuild-small.SAFER, directory1.inbuild-small.SAFER, directory2.inbuild-small.SAFER,
+    directory4.inbuild-small.SAFER]
+  router: [router2.inbuild-small.SAFER, router1.inbuild-small.SAFER, router6.inbuild-small.SAFER,
+    router4.inbuild-small.SAFER, router9.inbuild-small.SAFER, router18.inbuild-small.SAFER,
+    router19.inbuild-small.SAFER, router16.inbuild-small.SAFER, router17.inbuild-small.SAFER,
+    router10.inbuild-small.SAFER, router3.inbuild-small.SAFER, router20.inbuild-small.SAFER,
+    router5.inbuild-small.SAFER]
+  server: [server4.inbuild-small.SAFER, server5.inbuild-small.SAFER, server3.inbuild-small.SAFER]
+roles: [control, core, server, client, directory, router]
