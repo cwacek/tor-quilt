@@ -57,12 +57,16 @@ def update_hosts_list(expname):
       except KeyError:
         roledef[role] = [host]
 
-  hostfile['roles'] = list(roles)
-  hostfile['hosts'] = list(hostlist)
+  #hostfile['roles'] = list(roles)
+  #hostfile['hosts'] = list(hostlist)
   hostfile['roledefs'] = roledef
   with open('hostfile.yaml','w') as hostfilewriter:
     yaml.dump(hostfile,hostfilewriter)
 
 
 if __name__ == "__main__":
+  if len(sys.argv) < 2:
+    sys.stderr.write("Missing required argument 'experiment_name'\n")
+    sys.exit(1)
+    
   update_hosts_list(sys.argv[1])

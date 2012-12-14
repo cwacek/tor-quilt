@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # steps required to build/deploy safest-tor
-exp=rapidtor-fc-prot-ratelimited
+exp=metrics.yaml
 
 sudo apt-get install fabric python-yaml
 
