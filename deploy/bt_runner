@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+if [ $# -lt 3 ]; then
+    echo "usage: bt_runner <torrent> <dest path> <log path> [ <socks port> ]"
+    exit 1
+fi
+
+torrent=$1
+dest=$2
+log=$3
+
+if [ $# = 4 ]; then
+	socks_port=$4
+	torify.pl 127.0.0.1 $socks_port "btdownloadheadless $torrent --saveas $dest --display_interval 10 --rerequest_interval 30 --spew 1" &> $log
+else
+	btdownloadheadless $torrent --saveas $dest --display_interval 10 --rerequest_interval 30 --spew 1 &> $log
+fi
