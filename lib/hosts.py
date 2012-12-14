@@ -1,41 +1,54 @@
 import yaml
 import os
 import sys
+import subprocess
+
+# check_output appears in 2.7
+try:
+    from subprocess import check_output
+except:
+    def check_output(args):
+        return subprocess.Popen(args, stdout=subprocess.PIPE).communicate()[0]
 
 def load_host_file():
   from fabric.api import env
   if os.path.exists("hostfile.yaml"):
     with open('hostfile.yaml') as hostfilereader:
       hostfile = yaml.load(hostfilereader)
-      env.hosts = hostfile['hosts']
-      env.roles = hostfile['roles']
       env.roledefs = hostfile['roledefs']
 
-def update_hosts_list():
+def update_hosts_list(expname):
   import subprocess
   hostfile =dict()
   roles = set()
   hostlist = set()
   roledef = dict()
-  try: 
-    hosts = subprocess.Popen([ "node_list" ],stdout=subprocess.PIPE).communicate()[0]
-  except subprocess.CalledProcessError,e:
-    sys.stderr.write("Failed to run 'node_list': [{0}] '{1}'\n".format(e.returncode,e.output))
-    return -1
-  except OSError,e:
-    sys.stderr.write("Failed to find command 'node_list'. "
-                     "Are you running this on users.isi.deterlab.net?\n")
-    return -1
+
+  args = ['script_wrapper.py', 'node_list', '-v', '-e', 'SAFER,%s' % expname]
+  container = False
+
+  if os.path.exists('/proj/SAFER/exp/%s/containers' % expname):
+      # containerized experiment
+      args.append('-c')
+      container = True
+
+  try:
+      hosts = check_output(args).split()
+  except subprocess.CalledProcessError, e:
+      sys.stderr.write("Failed to find command 'node_list'. "
+              "Are you running this on users.isi.deterlab.net?\n")
+      sys.stderr.write(str(e))
+      return -1
 
   import re
-  role_re = re.compile("(([a-zA-Z-]+)[^\.]*\.(?:[-a-zA-Z0-9]+)\.(?:[-a-zA-Z0-9]+))")
+  role_re = re.compile("(([a-zA-Z]+).*)")
 
-  #We skip the first line
-  for hoststring in hosts.split("\n")[1:]:
-    host = hoststring.split("/")[0].strip()
+  for host in hosts:
     m = re.match(role_re,host)
     if m:
-      host = m.group(1)
+      if not container:
+        host = '%s.%s.safer' % (host, expname)
+
       role = m.group(2)
       roles.add(role)
       hostlist.add(host)
@@ -52,4 +65,4 @@ def update_hosts_list():
 
 
 if __name__ == "__main__":
-  update_hosts_list()
+  update_hosts_list(sys.argv[1])

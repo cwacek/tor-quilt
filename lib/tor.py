@@ -28,7 +28,7 @@ def start(restart=False):
 
     elif env.host.lower() in map(str.lower,env.roledefs['router']):
       run("chmod 700 .")
-      run("rm -rf cached-* lock log state router-stability")
+      run("rm -rf cached-* lock log state router-stability lastor.log")
       run("(nohup tor router {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
             ip=network.get_deter_ip(),
             datadir=state.current.config['tor_datadir'],
@@ -39,7 +39,7 @@ def start(restart=False):
       for i in xrange(state.current.config['clients_per_host']):
         with cd(str(i)):
           run("chmod 700 .")
-          run("rm -rf cached-* lock log state router-stability")
+          run("rm -rf cached-* lock log state router-stability lastor.log")
           run("(nohup tor client {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
             ip=network.get_deter_ip(),
             datadir=state.current.config['tor_datadir'] + "/{0}".format(i),
@@ -65,7 +65,7 @@ def check_running():
 
 def __install():
   with settings(hide("stdout")):
-    sudo("apt-get install -y libevent-dev")
+    sudo("apt-get install -y libevent-dev automake")
   with cd("/tmp/tor-compile"):
     run("bash deploy-build.sh")
 
@@ -112,7 +112,7 @@ def deploy(config_file,src,force=False):
 
   with settings(hide('warnings'),warn_only=True):
     sudo("mkdir -p /var/lib/tor")
-    sudo("chown {0} /var/lib/tor".format(os.getlogin()))
+    sudo("chown -R {0} /var/lib/tor".format(os.getlogin()))
  
 
     
@@ -145,7 +145,7 @@ def __apply_relay_config(exp_config):
   nickname = "Nickname {0}".format(env.host_string.split(".")[0])
 
   try:
-    host_options = exp_config['host_specific_options'][env.host_string.lower()]
+    host_options = exp_config['host_specific_options'][env.host_string.split(".")[0].lower()]
   except KeyError:
     print("No host specific options to add")
     host_options = list()
@@ -175,7 +175,7 @@ def __apply_directory_config(exp_config):
   nickname = "Nickname {0}".format(env.host_string.split(".")[0])
 
   try:
-    host_options = exp_config['host_specific_options'][env.host_string.lower()]
+    host_options = exp_config['host_specific_options'][env.host_string.split(".")[0].lower()]
   except KeyError:
     print("No host specific options to add")
     host_options = list()
@@ -226,7 +226,7 @@ def __apply_client_config(exp_config,clients_per_client_host=1):
     nickname = "Nickname {0}Sub{1}".format(env.host_string.split(".")[0],i)
 
     try:
-      host_options = exp_config['host_specific_options'][env.host_string.lower()]
+      host_options = exp_config['host_specific_options'][env.host_string.split(".")[0].lower()]
     except KeyError:
       print("No host specific options to add")
       host_options = list()
@@ -278,6 +278,13 @@ Nickname Fingerprinter
 @parallel('5')
 def generate_dir_keys():
   ip = network.get_deter_ip()
+  
+  with settings(warn_only=True):
+    sudo("killall tor")
+  sudo("chown -R {0}:SAF-SAFEST /var/lib/tor".format(os.getlogin()))
+  sudo("chmod g+rwx /var/lib/tor")
+  sudo("chmod -R g+rw /var/lib/tor")
+
   with cd("/var/lib/tor"):
 
     with settings(hide('stdout')):

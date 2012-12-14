@@ -44,7 +44,10 @@ $fab run_tor:roles=client
 if [[ "$?" != "0" ]]; then echo "Failed to run clients"; exit 1; fi
 sleep 60
 
-$fab run_clients:config_file=$config
+$fab stop_clients
+if [[ "$?" != "0" ]]; then echo "Failed to stop clients"; exit 1; fi
+
+$fab start_clients:config_file=$config
 if [[ "$?" != "0" ]]; then echo "Failed to run curl"; exit 1; fi
 
 for i in $(seq 0 9); do

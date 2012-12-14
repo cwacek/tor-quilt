@@ -2,28 +2,16 @@ tor_options:
   datadir: /var/lib/tor
   directory_opts: []
   router_opts:
-    - "VivUseMinimumInsteadOfMedian 1"
-    - "VivSelectStrategy tor"
-    - "VivProtectErrorRejectRate 0.3"
-    - "VivProtectErrorWindow 30"
-    - "VivUnprotectedBootstrapCount 200"
-    - "VivProtectCentroidRejectRate 0.3"
-    - "VivProtectCentroidWindow 30"
-    - "VivMaxCoordDist 350.0"
-    - "NeighborPingInterval 3"
-    - "NumPingMeasurements 3"
     - "CellStatistics 1"
-    - "ExitPolicy accept *:*"
-  client_opts:
-    - "VivSelectStrategy bestof"
-    - "VivSelectCount 10"
-    - "VivSelectVar 0"
+  client_opts: []
   host_specific_options:
-    router11.inbuild2.safer:
-      - "VivBeMalicious 1"
-    router4.inbuild2.safer:
-      - "VivBeMalicious 1"
+    router3.inbuild2.safer:
+      - "ExitPolicy accept *:*"
+    router6.inbuild2.safer:
+      - "ExitPolicy accept *:*"
+    router9.inbuild2.safer:
+      - "ExitPolicy accept *:*"
 experiment_options:
-  clients_per_client_host: 3
-  bulk_clients: [client2.inbuild2.safer,client1.inbuild2.safer]
-  tor_deploy_tarball: ~/eval_ctrl_2012/deploy/rapidtor.tgz
+  clients_per_client_host: 1
+  bulk_clients: []
+  tor_deploy_tarball: deploy/rj_tor.tgz

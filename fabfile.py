@@ -1,5 +1,6 @@
-from fabric.api import local,run,env,roles,hosts,execute,cd,parallel,sudo,hide,put
+from fabric.api import local,env,roles,hosts,execute,cd,parallel,sudo,hide,put,runs_once
 import fabric.api
+from lib.util import state
 from lib.util import ensure_file_open
 import os
 import yaml
@@ -14,6 +15,11 @@ def setup_servers(force=False):
   """ Install apache and tcpping tools """
   lib.server.setup_http(force)
   lib.server.install_voip_tools(force)
+  lib.server.start_voip()
+  sudo("apt-get -qq install -y bittorrent dtach")
+  put("deploy/bt_runner", "/usr/bin", use_sudo=True)
+  sudo("chmod +x /usr/bin/bt_runner")
+
 
 @roles('client')
 @parallel(pool_size=5)
@@ -21,18 +27,57 @@ def setup_clients(force=False):
   """ Install curl, tcpping, and client helpers """
   import lib.server
 
+  sudo("apt-get -qq install -y curl tsocks bittorrent dtach build-essential")
   lib.server.install_voip_tools(force)
-  sudo("apt-get install -y curl")
-  put("deploy/curl_runner.pl","/usr/bin/",use_sudo=True)
+  put("deploy/curl_runner.pl", "/usr/bin/", use_sudo=True)
+  put("deploy/voip_runner.pl", "/usr/bin", use_sudo=True)
+  put("deploy/torify.pl", "/usr/bin", use_sudo=True)
+  put("deploy/bt_runner", "/usr/bin", use_sudo=True)
+  sudo("chmod +x /usr/bin/voip_runner.pl")
+  sudo("chmod +x /usr/bin/torify.pl")
+  sudo("chmod +x /usr/bin/bt_runner")
 
+@runs_once
+def start_clients(config_file):
+  """ Run clients. Uses the following settings from
+  the config file:
+
+  experiment_options:
+    client_active_time: <int>
+          (The time in seconds clients should be active)
+    bulk_clients: <list>
+          (A list of the short hostnames that should host bulk clients)
+    bt_tracker_host: <string>
+          (A hostname to run the BitTorrent tracker on)
+    bt_torrent_path: <string>
+          (The torrent path)
+    bt_data_path: <string>
+          (Some sort of data path (ask melkins))
+    bt_seed_hosts:  <list>
+          (Short hostnames for seeders)
+  """
+  if state.get('client.bittorrent.running') == True:
+    print("Bittorrent appears to be running. You might want to run stop_clients before starting it again")
+    return
+  execute(_start_bttrack, config_file)
+  execute(_start_btserv, config_file)
+  execute(_run_clients, config_file)
+  state.store('client.bittorrent.running',True)
+
+@runs_once
+def stop_clients():
+  execute(_stop_btserv)
+  execute(_stop_clients)
+  state.store('client.bittorrent.running',False)
+  
 @roles('client')
-def run_clients(config_file):
+def _run_clients(config_file):
   """ Run curl clients. Uses the following settings from
   the config file:
 
   experiment_options:
-    client_active_time: <int>  
-          (The time in seconds clients should be active) 
+    client_active_time: <int>
+          (The time in seconds clients should be active)
     bulk_clients: <list>
           (A list of the hostnames that should host bulk clients)
   """
@@ -43,12 +88,17 @@ def run_clients(config_file):
     conf = yaml.load(config_in)
   import lib.client
   lib.client.start_http(conf)
-  
+  lib.client.start_voip_client(conf)
+  lib.client.start_btclient(conf)
+
 @roles('client')
 @parallel(pool_size=10)
-def stop_clients():
+def _stop_clients():
   import lib.client
   lib.client.stop_http()
+  lib.client.stop_voip()
+  lib.client.stop_btclient()
+
 
 @roles('client','router','directory')
 @parallel(pool_size=10)
@@ -213,3 +263,53 @@ def update_hosts_list():
   MUST BE RUN FROM users.isi.deterlab.net
   """
   lib.hosts.update_hosts_list()
+
+
+@parallel(pool_size=10)
+@roles('client', 'router', 'directory')
+def update_apt():
+    """ Run apt-get update.
+
+    """
+    sudo("apt-get clean")
+    sudo("apt-get update -qq")
+
+
+@parallel(pool_size=5)
+@roles('client', 'server', 'control')
+def setup_magi():
+    """ Run the magi bootstrap script.
+
+    """
+    sudo("python /share/magi/v08/magi_bootstrap.py")
+
+
+@roles('server')
+def _start_bttrack(config_file):
+    if config_file is None:
+        print("Must specify config_file")
+        return
+    with ensure_file_open(config_file) as config_in:
+        conf = yaml.load(config_in)
+    import lib.client
+    lib.client.start_bttrack(conf)
+
+
+@roles('server')
+def _start_btserv(config_file):
+    if config_file is None:
+        print("Must specify config_file")
+        return
+    with ensure_file_open(config_file) as config_in:
+        conf = yaml.load(config_in)
+    import lib.client
+    lib.client.start_btseed(conf)
+    state.current.store("servers.bittorrent.started",True)
+
+
+@roles('server')
+def _stop_btserv():
+    import lib.client
+    lib.client.stop_btseed()
+    lib.client.stop_bttrack()
+    state.current.store("servers.bittorrent.started",False)

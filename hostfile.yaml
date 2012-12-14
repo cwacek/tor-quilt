@@ -1,26 +1,20 @@
-hosts: [router18.inbuild-small.SAFER, router4.inbuild-small.SAFER, router19.inbuild-small.SAFER,
-  router3.inbuild-small.SAFER, client4.inbuild-small.SAFER, router2.inbuild-small.SAFER,
-  client9.inbuild-small.SAFER, directory5.inbuild-small.SAFER, client5.inbuild-small.SAFER,
-  core1.inbuild-small.SAFER, client8.inbuild-small.SAFER, directory4.inbuild-small.SAFER,
-  router10.inbuild-small.SAFER, router16.inbuild-small.SAFER, server3.inbuild-small.SAFER,
-  client3.inbuild-small.SAFER, router6.inbuild-small.SAFER, router9.inbuild-small.SAFER,
-  core3.inbuild-small.SAFER, control.inbuild-small.SAFER, router20.inbuild-small.SAFER,
-  client7.inbuild-small.SAFER, server5.inbuild-small.SAFER, router1.inbuild-small.SAFER,
-  server4.inbuild-small.SAFER, directory2.inbuild-small.SAFER, client6.inbuild-small.SAFER,
-  router17.inbuild-small.SAFER, core2.inbuild-small.SAFER, router5.inbuild-small.SAFER,
-  directory1.inbuild-small.SAFER]
+hosts: [NetRoute1.TorMetrics.SAFER, client2.TorMetrics.SAFER, router8.TorMetrics.SAFER,
+  router9.TorMetrics.SAFER, client5.TorMetrics.SAFER, directory2.TorMetrics.SAFER,
+  router2.TorMetrics.SAFER, client4.TorMetrics.SAFER, client3.TorMetrics.SAFER, router4.TorMetrics.SAFER,
+  NetRoute5.TorMetrics.SAFER, router7.TorMetrics.SAFER, directory1.TorMetrics.SAFER,
+  directory3.TorMetrics.SAFER, NetRoute2.TorMetrics.SAFER, router6.TorMetrics.SAFER,
+  client1.TorMetrics.SAFER, router1.TorMetrics.SAFER, NetRoute3.TorMetrics.SAFER,
+  NetRoute4.TorMetrics.SAFER, control.TorMetrics.SAFER, router3.TorMetrics.SAFER,
+  server2.TorMetrics.SAFER, server1.TorMetrics.SAFER, router5.TorMetrics.SAFER]
 roledefs:
-  client: [client3.inbuild-small.SAFER, client5.inbuild-small.SAFER, client8.inbuild-small.SAFER,
-    client9.inbuild-small.SAFER, client4.inbuild-small.SAFER, client6.inbuild-small.SAFER,
-    client7.inbuild-small.SAFER]
-  control: [control.inbuild-small.SAFER]
-  core: [core2.inbuild-small.SAFER, core3.inbuild-small.SAFER, core1.inbuild-small.SAFER]
-  directory: [directory5.inbuild-small.SAFER, directory1.inbuild-small.SAFER, directory2.inbuild-small.SAFER,
-    directory4.inbuild-small.SAFER]
-  router: [router2.inbuild-small.SAFER, router1.inbuild-small.SAFER, router6.inbuild-small.SAFER,
-    router4.inbuild-small.SAFER, router9.inbuild-small.SAFER, router18.inbuild-small.SAFER,
-    router19.inbuild-small.SAFER, router16.inbuild-small.SAFER, router17.inbuild-small.SAFER,
-    router10.inbuild-small.SAFER, router3.inbuild-small.SAFER, router20.inbuild-small.SAFER,
-    router5.inbuild-small.SAFER]
-  server: [server4.inbuild-small.SAFER, server5.inbuild-small.SAFER, server3.inbuild-small.SAFER]
-roles: [control, core, server, client, directory, router]
+  NetRoute: [NetRoute1.TorMetrics.SAFER, NetRoute3.TorMetrics.SAFER, NetRoute2.TorMetrics.SAFER,
+    NetRoute5.TorMetrics.SAFER, NetRoute4.TorMetrics.SAFER]
+  client: [client3.TorMetrics.SAFER, client1.TorMetrics.SAFER, client2.TorMetrics.SAFER,
+    client4.TorMetrics.SAFER, client5.TorMetrics.SAFER]
+  control: [control.TorMetrics.SAFER]
+  directory: [directory1.TorMetrics.SAFER, directory2.TorMetrics.SAFER, directory3.TorMetrics.SAFER]
+  router: [router8.TorMetrics.SAFER, router2.TorMetrics.SAFER, router3.TorMetrics.SAFER,
+    router1.TorMetrics.SAFER, router6.TorMetrics.SAFER, router7.TorMetrics.SAFER,
+    router4.TorMetrics.SAFER, router5.TorMetrics.SAFER, router9.TorMetrics.SAFER]
+  server: [server1.TorMetrics.SAFER, server2.TorMetrics.SAFER]
+roles: [control, server, NetRoute, client, directory, router]

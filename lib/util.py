@@ -30,6 +30,15 @@ class state(object):
     state.current = self
 
   @classmethod
+  def get(classtype,key):
+    if classtype.current == None:
+      raise Exception("State not established")
+    try:
+      return classtype.current.config[key]
+    except KeyError:
+      return None
+
+  @classmethod
   def store(classtype,key,val):
     classtype.current.config[key] = val
     classtype.current.config.sync()

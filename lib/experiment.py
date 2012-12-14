@@ -26,6 +26,8 @@ def __pull_directory_data(datadir,save_to):
   with settings(hide("running","stderr"),warn_only=True):
     for i in xrange(0,10):
       try:
+        sudo("find {0} -type d | xargs sudo chmod 755".format(datadir))
+        sudo("find {0} -type f | xargs sudo chmod 644".format(datadir))
         transferred = get(src, save_name)
       except Exception:
         print(red("Unhandled exception when grabbing files"))
@@ -44,8 +46,10 @@ def __pull_client_data(datadir,save_to):
     src  = "{0}/{1}/*".format(datadir,str(i))
     run("mkdir -p {0}".format(save_name))
     with settings(hide("running","stderr"),warn_only=True):
-      for i in xrange(0,10):
+      for j in xrange(0,10):
         try:
+          sudo("find {0}/{1} -type d | xargs sudo chmod 755".format(datadir,str(i)))
+          sudo("find {0}/{1} -type f | xargs sudo chmod 644".format(datadir,str(i)))
           transferred = get(src, save_name)
         except Exception:
           print(red("Unhandled exception when grabbing files"))
