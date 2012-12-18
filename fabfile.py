@@ -6,6 +6,7 @@ import os
 import yaml
 import lib.hosts
 lib.hosts.load_host_file()
+state.establish()
 
 
 @parallel(pool_size=5)
@@ -99,7 +100,6 @@ def _stop_clients():
   lib.client.stop_voip()
   lib.client.stop_btclient()
 
-
 @roles('client','router','directory')
 @parallel(pool_size=10)
 def configure_torrc(config_file):
@@ -134,6 +134,32 @@ def configure_torrc(config_file):
     conf = yaml.load(config_in)
     lib.tor.apply_config(conf['tor_options'],
                             conf['experiment_options']['clients_per_client_host'])
+
+@parallel(pool_size=10)
+@roles('client','router','directory')
+def start_capture(config_file=None):
+  """
+  Start tcpdump and Tor control port captures on the 
+  machines specified in the 
+  experiment_options.capture_on configuration parameter
+
+  Dump files are placed into the Tor data directory, so
+  save_data will collect them (Dey gonna be huge though).
+  """
+  with ensure_file_open(config_file) as config_in:
+    conf = yaml.load(config_in)
+
+  if env.host_string.split(".")[0] in conf['experiment_options']['capture_on']:
+    lib.capture.start_tcpdump()
+    lib.capture.start_tor_events()
+
+@roles('client','router','directory')
+def stop_capture():
+  """
+  Stop any running data captures
+  """
+  lib.capture.stop_tcpdump()
+  lib.capture.sttop_tor_events()
 
 @roles('client','router','directory')
 def deploy_tor(config_file=None,src=None):

@@ -18,18 +18,18 @@ def start(restart=False):
 
   with cd(state.current.config['tor_datadir']):
     if env.host.lower() in map(str.lower,env.roledefs['directory']):
-      run("chmod 700 .")
-      run("rm -rf cached-* lock log state router-stability lastor.log")
-      run("(nohup tor directory {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
+      sudo("chmod 700 .")
+      sudo("rm -rf cached-* lock log state router-stability lastor.log")
+      sudo("(nohup /usr/bin/tor directory {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
             ip=network.get_deter_ip(),
             datadir=state.current.config['tor_datadir'],
             rcfile=state.current.config['tor_datadir'] + "/torrc"
           ),pty=False)
 
     elif env.host.lower() in map(str.lower,env.roledefs['router']):
-      run("chmod 700 .")
-      run("rm -rf cached-* lock log state router-stability lastor.log")
-      run("(nohup tor router {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
+      sudo("chmod 700 .")
+      sudo("rm -rf cached-* lock log state router-stability lastor.log")
+      sudo("(nohup /usr/bin/tor router {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
             ip=network.get_deter_ip(),
             datadir=state.current.config['tor_datadir'],
             rcfile=state.current.config['tor_datadir'] + "/torrc"
@@ -38,9 +38,9 @@ def start(restart=False):
     elif env.host.lower() in map(str.lower,env.roledefs['client']):
       for i in xrange(state.current.config['clients_per_host']):
         with cd(str(i)):
-          run("chmod 700 .")
-          run("rm -rf cached-* lock log state router-stability lastor.log")
-          run("(nohup tor client {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
+          sudo("chmod 700 .")
+          sudo("rm -rf cached-* lock log state router-stability lastor.log")
+          sudo("(nohup /usr/bin/tor client {ip} {datadir} {rcfile} >tor_startup 2>&1 </dev/null &)".format(
             ip=network.get_deter_ip(),
             datadir=state.current.config['tor_datadir'] + "/{0}".format(i),
             rcfile=state.current.config['tor_datadir'] + "/{0}".format(i) +"/torrc"
@@ -54,6 +54,7 @@ def kill():
     pid = run("pgrep tor | xargs")
     if pid:
       sudo("kill {0}".format(pid))
+
 
 def check_running():
   with settings(hide('warnings'),warn_only=True):
@@ -131,6 +132,7 @@ REQUIRED_RELAY_OPTIONS="""
 ORPort 5000
 ORListenAddress {ip}:5000
 Address {ip}
+User {user}
 """
 def __apply_relay_config(exp_config):
 
@@ -202,6 +204,7 @@ ReachableORAddresses 10.0.0.0/8
 SocksPort {socks_port}
 SocksListenAddress 127.0.0.1:{socks_port}
 Address {ip}
+User {user}
 """
 
 def __apply_client_config(exp_config,clients_per_client_host=1):
@@ -254,7 +257,7 @@ def _upload_torrc(template_data,datadir):
 def apply_config(config,clients_per_client_host):
   ip = network.get_deter_ip()
 
-  config.update({"ip":ip, "datadir":config['datadir'] })
+  config.update({"ip":ip, "datadir":config['datadir'] , "user":os.getlogin()})
 
   state.store("tor_datadir",config['datadir'])
   
