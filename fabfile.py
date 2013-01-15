@@ -5,6 +5,7 @@ from lib.util import ensure_file_open
 import os
 import yaml
 import lib.hosts
+import lib.capture
 lib.hosts.load_host_file()
 state.establish()
 
@@ -135,7 +136,7 @@ def configure_torrc(config_file):
     lib.tor.apply_config(conf['tor_options'],
                             conf['experiment_options']['clients_per_client_host'])
 
-@parallel(pool_size=10)
+#@parallel(pool_size=10)
 @roles('client','router','directory')
 def start_capture(config_file=None):
   """
@@ -149,9 +150,10 @@ def start_capture(config_file=None):
   with ensure_file_open(config_file) as config_in:
     conf = yaml.load(config_in)
 
-  if env.host_string.split(".")[0] in conf['experiment_options']['capture_on']:
-    lib.capture.start_tcpdump()
-    lib.capture.start_tor_events()
+  if 'capture' in conf['experiment_options']:
+    if env.host_string.split(".")[0] in conf['experiment_options']['capture']['hosts']:
+      lib.capture.start_tcpdump(conf)
+      lib.capture.start_tor_events()
 
 @roles('client','router','directory')
 def stop_capture():
@@ -159,7 +161,7 @@ def stop_capture():
   Stop any running data captures
   """
   lib.capture.stop_tcpdump()
-  lib.capture.sttop_tor_events()
+  lib.capture.stop_tor_events()
 
 @roles('client','router','directory')
 def deploy_tor(config_file=None,src=None):
