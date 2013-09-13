@@ -168,6 +168,14 @@ def __apply_relay_config(exp_config):
 
   _upload_torrc(template_conf,exp_config['datadir'])
 
+  if 'enable_ratpac_delay' in exp_config:
+    with cd('/tmp'):
+      if env.host_string.split(".")[0] in exp_config['enable_ratpac_delay']:
+        put('deploy/ratpac.config.enabled', 'ratpac.config')
+      else:
+        put('deploy/ratpac.config.disabled', 'ratpac.config')
+
+
 def __apply_directory_config(exp_config):
 
   template_conf = {
