@@ -141,8 +141,12 @@ def __apply_relay_config(exp_config):
     'relay_options': "",
     'addl_options': "",
     'dirservlines': "",
+    'tor_logdomain': '[ DIR ] info [ *, ~DIR ] notice',
     "datadir": exp_config['datadir']
     }
+
+  if 'tor_logdomain' in exp_config:
+    template_conf['tor_logdomain'] = exp_config['tor_logdomain']
 
   nickname = "Nickname {0}".format(env.host_string.split(".")[0])
 
@@ -171,8 +175,12 @@ def __apply_directory_config(exp_config):
     'relay_options': "",
     'addl_options': "",
     'dirservlines': "",
+    'tor_logdomain': '[ DIR ] info [ *, ~DIR ] notice',
     "datadir": exp_config['datadir']
     }
+
+  if 'tor_logdomain' in exp_config:
+    template_conf['tor_logdomain'] = exp_config['tor_logdomain']
 
   nickname = "Nickname {0}".format(env.host_string.split(".")[0])
 
@@ -210,7 +218,7 @@ User {user}
 def __apply_client_config(exp_config,clients_per_client_host=1):
 
   state.store('clients_per_host',clients_per_client_host)
-  
+
   for i in xrange(clients_per_client_host):
 
     datadir = "{0}/{1}".format(exp_config['datadir'],i)
@@ -221,8 +229,12 @@ def __apply_client_config(exp_config,clients_per_client_host=1):
       'relay_options': "",
       'addl_options': "",
       'dirservlines': "",
+      'tor_logdomain': '[ DIR ] info [ *, ~DIR ] notice',
       "datadir": datadir
       }
+
+    if 'tor_logdomain' in exp_config:
+      template_conf['tor_logdomain'] = exp_config['tor_logdomain']
 
     sudo("mkdir -p {0}".format(datadir))
 

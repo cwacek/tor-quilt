@@ -100,6 +100,7 @@ def start_tor_events():
                 .format(outf=event_dump,
                         dtach=dtach_socket))
 
+  else:
     with cd("{0}".format(state.get('tor_datadir'))):
       if not exists("control"):
         print("No control port found for Tor")

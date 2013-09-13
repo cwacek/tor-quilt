@@ -107,7 +107,8 @@ def configure_torrc(config_file):
   """ Configure Tor clients
 
   Configures Tor clients according to the settings 
-  specified in the experiment configuration file. Uses 
+  specified in the experiment configuration file 
+  (passed using parameter 'config_file'). Uses 
   the following options:
 
   tor_options:
@@ -185,7 +186,6 @@ def deploy_tor(config_file=None,src=None):
 @parallel(pool_size=25)
 @roles('client','router','directory')
 def setup_tor(force=False):
-  env.linewise=True
   """ Deploy Tor. 'fab -d setup_tor' for more help...
 
   This should be called after 'deploy_tor'.
@@ -237,6 +237,7 @@ def setup_tor(force=False):
   has been done already. To FORCE recompilation, pass 
   'force=True' as an option.
   """
+  env.linewise=True
   import lib.tor
   lib.tor.install(force=force)
 
