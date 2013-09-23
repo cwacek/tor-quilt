@@ -2,7 +2,7 @@
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-#sudo apt-get install -y fabric python-yaml
+sudo apt-get install -y fabric python-yaml
 
 #experiments="rapidtor-fc-prot rapidtor-fc-prot-malicious"
 
