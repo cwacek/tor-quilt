@@ -20,7 +20,9 @@ tor_options:
     opts:
       policy:
         _default: basic
-        client1: borisov_bandwidth
+        client4: borisov_bandwidth
+        client8: lowest_latency
+        client5: exit_enclaves
 experiment_options:
   clients_per_client_host: 2
   bulk_clients: []

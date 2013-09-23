@@ -1,9 +1,12 @@
 from fabric.api import local,run,env,roles,cd,sudo,put,settings,hide,parallel
 from lib.util import state
 state.establish()
-from fabric.contrib.files import upload_template,append
+from fabric.utils import puts
+from fabric.contrib.files import upload_template,append, exists
 from lib.util import state,network
+from lib.countries import get_country_code
 import os
+import sys
 
 def start(restart=False):
   if check_running():
@@ -46,7 +49,13 @@ def start(restart=False):
             rcfile=state.current.config['tor_datadir'] + "/{0}".format(i) +"/torrc"
           ),pty=False)
 
-    else: 
+          if exists("control.start"):
+            sudo("(nohup bash control.start > tor_control.out 2>&1 </dev/null &)"
+                 .format(
+                   datadir=state.current.config['tor_datadir'] + "/{0}".format(i))
+                 )
+
+    else:
       print("This host [{0}] does not run Tor".format(env.host))
 
 def kill():
@@ -114,9 +123,9 @@ def deploy(config_file,src,force=False):
   with settings(hide('warnings'),warn_only=True):
     sudo("mkdir -p /var/lib/tor")
     sudo("chown -R {0} /var/lib/tor".format(os.getlogin()))
- 
 
-    
+
+
   state.set_configured("tor.compiled")
 
 REQUIRED_DIR_OPTIONS="""
@@ -126,7 +135,7 @@ V3AuthoritativeDirectory 1
 V2AuthoritativeDirectory 1
 AuthoritativeDirectory 1
 ContactInfo NULL
-""" 
+"""
 
 REQUIRED_RELAY_OPTIONS="""
 ORPort 5000
@@ -176,6 +185,8 @@ def __apply_relay_config(exp_config):
       else:
         put('deploy/ratpac.config.disabled', 'ratpac.config')
 
+  return template_conf
+
 
 def __apply_directory_config(exp_config):
 
@@ -192,7 +203,7 @@ def __apply_directory_config(exp_config):
   if 'tor_logdomain' in exp_config:
     template_conf['tor_logdomain'] = exp_config['tor_logdomain']
 
-  nickname = "Nickname {0}".format(env.host_string.split(".")[0])
+  nickname = configure_nickname(exp_config)
 
   try:
     host_options = exp_config['host_specific_options'][env.host_string.split(".")[0].lower()]
@@ -200,7 +211,7 @@ def __apply_directory_config(exp_config):
     print("No host specific options to add")
     host_options = list()
 
-  template_conf['directory_options'] = REQUIRED_DIR_OPTIONS.format(**exp_config) 
+  template_conf['directory_options'] = REQUIRED_DIR_OPTIONS.format(**exp_config)
   template_conf['relay_options'] = REQUIRED_RELAY_OPTIONS.format(**exp_config)
 
   router_opts = exp_config['router_opts']
@@ -215,6 +226,8 @@ def __apply_directory_config(exp_config):
 
   _upload_torrc(template_conf,exp_config['datadir'])
 
+  return template_conf
+
 
 REQUIRED_CLIENT_OPTS="""
 ReachableAddresses 10.0.0.0/8
@@ -228,6 +241,7 @@ User {user}
 def __apply_client_config(exp_config,clients_per_client_host=1):
 
   state.store('clients_per_host',clients_per_client_host)
+  configs = []
 
   for i in xrange(clients_per_client_host):
 
@@ -249,7 +263,7 @@ def __apply_client_config(exp_config,clients_per_client_host=1):
 
     sudo("mkdir -p {0}".format(datadir))
 
-    nickname = "Nickname {0}Sub{1}".format(env.host_string.split(".")[0],i)
+    nickname = configure_nickname(exp_config, i)
 
     try:
       host_options = exp_config['host_specific_options'][env.host_string.split(".")[0].lower()]
@@ -257,21 +271,27 @@ def __apply_client_config(exp_config,clients_per_client_host=1):
       print("No host specific options to add")
       host_options = list()
 
-    user_options = exp_config['client_opts']
+    user_options = exp_config['client_opts'][:]
     user_options.extend(host_options)
     user_options.append(nickname)
 
     template_conf['addl_opts'] = "\n".join(user_options)
     required_options = REQUIRED_CLIENT_OPTS.format(**exp_config)
     template_conf['addl_opts'] += "\n{0}".format(required_options)
-  
+
     with open("dirlines.conf") as dirin:
       template_conf['dirservlines'] = dirin.read()
 
     _upload_torrc(template_conf,datadir)
 
+    configs.append(template_conf)
+
+  return configs
+
 def _upload_torrc(template_data,datadir):
 
+    puts("Uploading torrc with template_data {0}".format(
+      template_data))
     upload_template("lib/templates/torrc.conf",
                     "{0}/torrc".format(datadir),
                     template_data,use_sudo=True,backup=False)
@@ -283,14 +303,49 @@ def apply_config(config,clients_per_client_host):
   config.update({"ip":ip, "datadir":config['datadir'] , "user":os.getlogin()})
 
   state.store("tor_datadir",config['datadir'])
-  
+
   if env.host in env.roledefs['directory']:
-    __apply_directory_config(config)
+    opts = __apply_directory_config(config)
   elif env.host in env.roledefs['router']:
-    __apply_relay_config(config)
+    opts = __apply_relay_config(config)
   elif env.host in env.roledefs['client']:
-    __apply_client_config(config,clients_per_client_host)
-  else: raise Exception("unknown host role")
+    opts = __apply_client_config(config,clients_per_client_host)
+
+    for opt in opts:
+      setup_client_controller(config, opt)
+
+  else:
+    raise Exception("unknown host role")
+
+def setup_client_controller(tor_config, client_opts):
+  """ Setup a client controller, if one was requested, 
+  using general :tor_config: and this client's :client_opts:
+  """
+  try:
+    controller_config = tor_config['use_client_controller']
+  except KeyError:
+    sys.stderr.write("Not configuring client controller\n")
+    return
+
+  hostname = env.host_string.split(".")[0]
+
+  # Figure out what opts we need from the config file
+  config_opts = dict.fromkeys(controller_config['opts'])
+  for opt in config_opts:
+    try:
+      config_opts[opt] = controller_config['opts'][opt][hostname]
+    except KeyError:
+      config_opts[opt] = controller_config['opts'][opt]['_default']
+
+  client_opts.update(config_opts)
+
+  cmd = controller_config['run'].format(**client_opts)
+  puts("Setting client controller start cmd to '{0}'\n".format(cmd))
+
+  append("{0}/control.start".format(client_opts['datadir']),
+         "( {cmd} &)".format(cmd=cmd),
+         use_sudo=True,
+         escape=True)
 
 
 gen_dir_key="""
@@ -304,7 +359,7 @@ Nickname Fingerprinter
 @parallel('5')
 def generate_dir_keys():
   ip = network.get_deter_ip()
-  
+
   with settings(warn_only=True):
     sudo("killall tor")
   sudo("chown -R {0}:SAF-SAFEST /var/lib/tor".format(os.getlogin()))
@@ -346,4 +401,35 @@ def generate_dir_keys():
                     ip,
                     fingerprint.strip()))
 
+def configure_nickname(tor_options, enumerator=None):
+  """ Configure the nickname as the hostname of
+  the machine, with an optional :enumerator:. If
+  :country_codes: is in the Tor config, then configure
+  countrycodes into the nickname too """
 
+  hostname = env.host_string.split(".")[0]
+  index = ""
+  cc = None
+
+  if enumerator is not None:
+    index = "Sub{0}".format(enumerator)
+
+  try:
+    default = tor_options['country_codes']['_default']
+
+  except KeyError:
+    raise Exception("If 'country_codes' is supplied, you must give a '_default' key")
+
+  else:
+    if hostname not in tor_options['country_codes']:
+      cc = get_country_code(default)
+
+    else:
+      cc = get_country_code(tor_options['country_codes'][hostname])
+      if cc is None:
+        cc = get_country_code(default)
+
+  return "Nickname {hostname}{index}{cc}".format(
+      hostname=hostname,
+      index=index,
+      cc="CC{0}".format(cc) if cc is not None else "")
