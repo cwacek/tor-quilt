@@ -142,13 +142,14 @@ def __apply_relay_config(exp_config):
     'addl_options': "",
     'dirservlines': "",
     'tor_logdomain': '[ DIR ] info [ *, ~DIR ] notice',
-    "datadir": exp_config['datadir']
+    "datadir": exp_config['datadir'],
+    'control_port': 9100
     }
 
   if 'tor_logdomain' in exp_config:
     template_conf['tor_logdomain'] = exp_config['tor_logdomain']
 
-  nickname = "Nickname {0}".format(env.host_string.split(".")[0])
+  nickname = configure_nickname(exp_config)
 
   try:
     host_options = exp_config['host_specific_options'][env.host_string.split(".")[0].lower()]
@@ -184,7 +185,8 @@ def __apply_directory_config(exp_config):
     'addl_options': "",
     'dirservlines': "",
     'tor_logdomain': '[ DIR ] info [ *, ~DIR ] notice',
-    "datadir": exp_config['datadir']
+    "datadir": exp_config['datadir'],
+    'control_port': 9100
     }
 
   if 'tor_logdomain' in exp_config:
@@ -238,7 +240,8 @@ def __apply_client_config(exp_config,clients_per_client_host=1):
       'addl_options': "",
       'dirservlines': "",
       'tor_logdomain': '[ DIR ] info [ *, ~DIR ] notice',
-      "datadir": datadir
+      "datadir": datadir,
+      'control_port': 9100 + i
       }
 
     if 'tor_logdomain' in exp_config:

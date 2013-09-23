@@ -68,7 +68,7 @@ def stop_tcpdump():
 socat_runner = """
 #!/bin/bash
 
-< $1 socat unix-connect:$2 - | awk '{print strftime("%s"), $0; }' > $3
+< $1 nc localhost - | awk '{print strftime("%s"), $0; }' > $3 
 
 """
 
