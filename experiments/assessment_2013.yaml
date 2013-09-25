@@ -15,7 +15,7 @@ tor_options:
   country_codes:
     _default: US
   use_client_controller:
-    setup: 'cd ~/bin/python && bash install.sh'
+    setup: 'cp -r /groups/SAFER/SAFEST/bin/python /tmp && cd /tmp/python && bash install.sh'
     run: 'safest-stem -p {control_port} --parse-nicknames --policy {policy}'
     opts:
       policy:

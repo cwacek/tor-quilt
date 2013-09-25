@@ -7,6 +7,7 @@ from lib.util import state,network
 from lib.countries import get_country_code
 import os
 import sys
+from StringIO import StringIO
 
 def start(restart=False):
   if check_running():
@@ -50,7 +51,7 @@ def start(restart=False):
           ),pty=False)
 
           if exists("control.start"):
-            sudo("(nohup bash control.start > tor_control.out 2>&1 </dev/null &)"
+            sudo("(nohup bash control.start > tor_control.out 2>&1 </dev/null)"
                  .format(
                    datadir=state.current.config['tor_datadir'] + "/{0}".format(i))
                  )
@@ -327,6 +328,8 @@ def setup_client_controller(tor_config, client_opts):
     sys.stderr.write("Not configuring client controller\n")
     return
 
+  sudo(controller_config['setup'])
+
   hostname = env.host_string.split(".")[0]
 
   # Figure out what opts we need from the config file
@@ -342,10 +345,11 @@ def setup_client_controller(tor_config, client_opts):
   cmd = controller_config['run'].format(**client_opts)
   puts("Setting client controller start cmd to '{0}'\n".format(cmd))
 
-  append("{0}/control.start".format(client_opts['datadir']),
-         "( {cmd} &)".format(cmd=cmd),
-         use_sudo=True,
-         escape=True)
+  cmdio = StringIO("( {cmd} >control.out 2>&1 </dev/null &)".format(cmd=cmd))
+
+  put(cmdio,
+      "{0}/control.start".format(client_opts['datadir']),
+      use_sudo=True)
 
 
 gen_dir_key="""
