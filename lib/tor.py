@@ -51,7 +51,7 @@ def start(restart=False):
           ),pty=False)
 
           if exists("control.start"):
-            sudo("(nohup bash control.start > tor_control.out 2>&1 </dev/null)"
+            sudo("(nohup bash {datadir}/control.start )"
                  .format(
                    datadir=state.current.config['tor_datadir'] + "/{0}".format(i))
                  )

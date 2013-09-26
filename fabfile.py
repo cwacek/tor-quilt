@@ -1,4 +1,4 @@
-from fabric.api import local,env,roles,hosts,execute,cd,parallel,sudo,hide,put,runs_once
+from fabric.api import local,env,roles,hosts,execute,cd,parallel,sudo,hide,put,runs_once, settings
 import fabric.api
 from lib.util import state
 from lib.util import ensure_file_open
@@ -9,6 +9,13 @@ import lib.capture
 lib.hosts.load_host_file()
 state.establish()
 
+@roles('client','server','router')
+def kill_process(process=None):
+  if process is None:
+    return
+
+  with settings(warn_only=True):
+    sudo("killall {0}".format(process))
 
 @parallel(pool_size=5)
 @roles('server')
