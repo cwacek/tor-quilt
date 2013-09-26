@@ -14,6 +14,16 @@ tor_options:
       - "ExitPolicy accept *:*"
   country_codes:
     _default: US
+    router1: DE
+    router2: UK
+    router3: UK
+    router4: DE
+    router5: FR
+    router6: FR
+    router7: DE
+    router8: DE
+    router9: US
+    router10: DE
   use_client_controller:
     setup: 'cp -r /groups/SAFER/SAFEST/bin/python /tmp && cd /tmp/python && bash install.sh'
     run: 'safest-stem -p {control_port} --parse-nicknames --policy {policy} -v --log control.out'
