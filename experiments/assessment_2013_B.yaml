@@ -1,0 +1,82 @@
+tor_options:
+  tor_logdomain: '[ *,VIVALDI ]info'
+  datadir: /var/lib/tor
+  directory_opts: []
+  router_opts: []
+  client_opts:
+    - "__LeaveStreamsUnattached 1"
+  host_specific_options:
+    router3:
+      - "ExitPolicy accept *:*"
+    router6:
+      - "ExitPolicy accept *:*"
+    router9:
+      - "ExitPolicy accept *:*"
+  country_codes:
+    _default: US
+    router1: DE
+    router2: UK
+    router3: UK
+    router4: DE
+    router5: FR
+    router6: FR
+    router7: DE
+    router8: DE
+    router9: US
+    router10: DE
+    router11: ES
+    router12: ES
+    router13: ES
+    router14: ES
+    router15: DE
+    router16: US
+    router17: US
+    router18: FR
+    router19: FR
+    router20: FR
+    router21: DE
+    router22: US
+    router23: FR
+    router24: UK
+    router25: UK
+    directory1: DE
+    directory2: FR
+    directory3: UK
+    directory4: ES
+    directory5: US
+  use_client_controller:
+    setup: 'cp -r /groups/SAFER/SAFEST/bin/python /tmp && cd /tmp/python && bash install.sh'
+    run: 'safest-stem -p {control_port} --parse-nicknames --policy {policy} -v --log control.out'
+    opts:
+      policy:
+        _default: basic
+        client4: borisov_bandwidth
+        client8: lowest_latency
+        client5: exit_enclaves
+experiment_options:
+  clients_per_client_host: 2
+  bulk_clients: []
+  tor_deploy_tarball: deploy/vivaldi-2013-assessment.tgz
+  #capture:
+    #filter: 'host {ip}'
+    #hosts:
+      #- router1
+      #- router2 
+      #- router3
+      #- router4
+      #- router5 
+      #- router6
+      #- router7
+      #- router8 
+      #- router9
+      #- directory1
+      #- directory2
+      #- directory3
+      #- client1
+      #- client2
+      #- client3
+  voip_active_time: 180
+  bt_tracker_host: server1
+  bt_torrent_path: /proj/SAFER/share/SAFER-ISI/SAFEST/saf-assess-2012-b.torrent
+  bt_data_path: /proj/SAFER/images/Ub1004-CB-click-0922.ndz
+  bt_seed_hosts: [server2]
