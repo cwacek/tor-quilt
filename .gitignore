@@ -1,2 +1,5 @@
 hostfile.yaml
 state
+*.pyc
+dirlines.conf
+state.db
