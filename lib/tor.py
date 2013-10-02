@@ -326,6 +326,7 @@ def setup_client_controller(tor_config, client_opts):
     controller_config = tor_config['use_client_controller']
   except KeyError:
     sys.stderr.write("Not configuring client controller\n")
+    sudo("rm -f {0}/control.start".format(client_opts['datadir']))
     return
 
   sudo(controller_config['setup'])
