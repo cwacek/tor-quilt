@@ -12,6 +12,12 @@ def stop_http():
         sudo("killall curl_runner.pl")
 
 def start_http(config):
+  try:
+      if config['experiment_options']['client_active_time'] == 0:
+          return
+  except KeyError:
+      pass
+
   put("deploy/curl_runner.pl","/usr/bin/",use_sudo=True)
   sudo("chmod +x /usr/bin/curl_runner.pl")
   
@@ -45,9 +51,11 @@ def start_http(config):
 
 
 def start_voip_client(config):
+    chat_time = config['experiment_options']['voip_active_time']
+    if chat_time == 0:
+        return
     run("mkdir -p /tmp/voip_dtach")
     sudo("chmod g+w /tmp/voip_dtach")
-    chat_time = config['experiment_options']['voip_active_time']
     # do IP lookup here because voip_emul doesn't consult /etc/hosts
     dest = ','.join(socket.gethostbyname(x.split('.')[0]) for x in env.roledefs['server'])
     for i in xrange(state.current.config['clients_per_host']):
@@ -106,6 +114,9 @@ def start_btseed(conf):
     data_path = conf['experiment_options']['bt_data_path']
     tracker = conf['experiment_options']['bt_tracker_host']
 
+    if not torrent:
+        return
+
     # if this host is the tracker, do not use it as a seeder event if it is
     # listed in the config file, because this seems to break bit bittorrent
     h = env.host_string.split('.')[0]
@@ -130,6 +141,8 @@ def stop_btseed():
 
 def start_btclient(conf):
     torrent = conf['experiment_options']['bt_torrent_path']
+    if not torrent:
+        return
 
     with settings(hide('warnings'),warn_only=True):
         sudo('rm -rf /tmp/dtach_bt /tmp/btclient.nontor.data')
